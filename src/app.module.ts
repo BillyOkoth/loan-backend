@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -21,6 +21,10 @@ import { LoanService } from './loan/loan.service';
 import { AiController } from './ai/ai.controller';
 import { AiService } from './ai/ai.service';
 
+// Metrics Module
+import { MetricsModule } from './metrics/metrics.module';
+import { MetricsMiddleware } from './metrics/metrics.middleware';
+
 // Import the TypeORM config from ormconfig
 import { getTypeOrmConfig } from '../ormconfig';
 
@@ -31,6 +35,7 @@ import { getTypeOrmConfig } from '../ormconfig';
       envFilePath: '.env',
     }),
     TypeOrmModule.forRoot(getTypeOrmConfig()),
+    MetricsModule,
   ],
   controllers: [
     AppController,
@@ -48,10 +53,17 @@ import { getTypeOrmConfig } from '../ormconfig';
     AiService,
   ],
 })
-export class AppModule {
+export class AppModule implements NestModule {
   constructor(private readonly databaseStrategyFactory: DatabaseStrategyFactory) {
     // Register database strategies
-    this.databaseStrategyFactory.registerStrategy('oracle', new OracleService());
+    // this.databaseStrategyFactory.registerStrategy('oracle', new OracleService());
     this.databaseStrategyFactory.registerStrategy('postgres', new PostgresService());
+  }
+
+  configure(consumer: MiddlewareConsumer) {
+    // Temporarily disable middleware to test basic functionality
+    // consumer
+    //   .apply(MetricsMiddleware)
+    //   .forRoutes('*');
   }
 }

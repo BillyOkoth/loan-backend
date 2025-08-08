@@ -17,7 +17,7 @@ export class PostgresService implements DatabaseStrategy, OnModuleInit, OnModule
     try {
       // PostgreSQL + pgvector connection implementation
       // This would typically use pg package with pgvector extension
-      console.log('Connecting to PostgreSQL with pgvector...');
+      console.log('Connecting from the service to PostgreSQL with pgvector...');
       // const { Client } = require('pg');
       // this.client = new Client({
       //   host: process.env.POSTGRES_HOST,

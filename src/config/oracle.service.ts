@@ -6,7 +6,7 @@ export class OracleService implements DatabaseStrategy, OnModuleInit, OnModuleDe
   private connection: any = null;
 
   async onModuleInit() {
-    await this.connect();
+    // await this.connect();
   }
 
   async onModuleDestroy() {
@@ -17,7 +17,7 @@ export class OracleService implements DatabaseStrategy, OnModuleInit, OnModuleDe
     try {
       // Oracle 23ai connection implementation
       // This would typically use oracledb package
-      console.log('Connecting to Oracle 23ai...');
+      console.log('Connecting from the service to Oracle 23ai...');
       // const oracledb = require('oracledb');
       // this.connection = await oracledb.getConnection({
       //   user: process.env.ORACLE_USER,
