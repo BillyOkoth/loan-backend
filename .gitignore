@@ -33,3 +33,27 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# Docker
+.dockerignore
+
+# Secrets and sensitive files
+*.pem
+*.key
+*.crt
+secrets/
+secrets.json
+config/secrets.json
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
