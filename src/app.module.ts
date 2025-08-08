@@ -61,8 +61,9 @@ export class AppModule implements NestModule {
   }
 
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(MetricsMiddleware)
-      .forRoutes('*');
+    // Temporarily disable middleware to test basic functionality
+    // consumer
+    //   .apply(MetricsMiddleware)
+    //   .forRoutes('*');
   }
 }
