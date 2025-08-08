@@ -1,73 +1,210 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Loan Backend Application
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A comprehensive NestJS-based loan management system with AI-powered features, supporting both Oracle 23ai and PostgreSQL + pgvector databases.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Features
 
-## Description
+### Core Functionality
+- **Customer Management** - Full CRUD operations with validation
+- **Loan Processing** - Complete loan lifecycle management
+- **AI-Powered Analysis** - Risk assessment and loan recommendations
+- **Vector Search** - Similar loan finding using embeddings
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Database Support
+- **Oracle 23ai** - Native vector operations with `dbms_vector_chain.utl_to_embedding`
+- **PostgreSQL + pgvector** - Vector similarity search and storage
+- **Dynamic Configuration** - Switch between databases via environment variables
 
-## Installation
+### AI Features
+- **Loan Analysis** - AI-powered application analysis
+- **Risk Assessment** - Automated risk scoring
+- **Vector Embeddings** - Text-to-vector conversion
+- **Similarity Search** - Find similar loans using vector operations
+- **Loan Recommendations** - AI-generated recommendations
 
-```bash
-$ npm install
+## 📁 Project Structure
+
+```
+backend/
+├── src/
+│   ├── app.module.ts
+│   ├── main.ts
+│   ├── config/
+│   │   ├── database.strategy.ts  # Strategy pattern for DB connections
+│   │   ├── oracle.service.ts     # Oracle 23ai implementation
+│   │   ├── postgres.service.ts   # PostgreSQL + pgvector implementation
+│   ├── customer/
+│   │   ├── customer.controller.ts
+│   │   ├── customer.service.ts
+│   │   ├── dto/
+│   ├── loan/
+│   │   ├── loan.controller.ts
+│   │   ├── loan.service.ts
+│   │   ├── dto/
+│   ├── ai/
+│   │   ├── ai.controller.ts
+│   │   └── ai.service.ts
+│   ├── entities/                 # TypeORM entities
+│   │   ├── client.entity.ts
+│   │   ├── loan-application.entity.ts
+│   │   └── ... (12 entities total)
+├── ormconfig.ts                  # TypeORM configuration
+├── .env                          # Environment configuration
+└── Dockerfile
 ```
 
-## Running the app
+## 🛠️ Installation
 
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/BillyOkoth/loan-backend.git
+   cd loan-backend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp env.example .env
+   # Edit .env with your database credentials
+   ```
+
+4. **Start the application**
+   ```bash
+   npm run start:dev
+   ```
+
+## 🗄️ Database Setup
+
+### PostgreSQL + pgvector (Docker)
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Run PostgreSQL with pgvector
+docker run -d \
+  --name pgvector-dev \
+  -e POSTGRES_USER=admin \
+  -e POSTGRES_PASSWORD=EllaZanzi \
+  -e POSTGRES_DB=loanapp \
+  -p 5432:5432 \
+  ankane/pgvector
 ```
 
-## Test
+### Oracle 23ai
+- Install Oracle 23ai with vector capabilities
+- Configure connection string in `.env`
 
-```bash
-# unit tests
-$ npm run test
+## 🔧 Configuration
 
-# e2e tests
-$ npm run test:e2e
+### Environment Variables
+```env
+# Database Type
+DATABASE_TYPE=postgres  # or oracle
 
-# test coverage
-$ npm run test:cov
+# PostgreSQL Configuration
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=loanapp
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=EllaZanzi
+
+# Oracle Configuration
+ORACLE_HOST=localhost
+ORACLE_PORT=1521
+ORACLE_USER=your_user
+ORACLE_PASSWORD=your_password
+ORACLE_SID=XEPDB1
+
+# AI Configuration
+AI_API_KEY=your_openai_api_key
+AI_MODEL_ENDPOINT=https://api.openai.com/v1/embeddings
 ```
 
-## Support
+## 📡 API Endpoints
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Customers
+- `POST /customers` - Create customer
+- `GET /customers` - Get all customers (paginated)
+- `GET /customers/:id` - Get customer by ID
+- `PUT /customers/:id` - Update customer
+- `DELETE /customers/:id` - Delete customer
+- `GET /customers/:id/loans` - Get customer loans
 
-## Stay in touch
+### Loans
+- `POST /loans` - Create loan
+- `GET /loans` - Get all loans (paginated)
+- `GET /loans/:id` - Get loan by ID
+- `PUT /loans/:id` - Update loan
+- `DELETE /loans/:id` - Delete loan
+- `POST /loans/:id/approve` - Approve loan
+- `POST /loans/:id/reject` - Reject loan
+- `GET /loans/customer/:customerId` - Get loans by customer
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### AI Features
+- `POST /ai/analyze-loan` - Analyze loan application
+- `POST /ai/generate-embedding` - Generate text embeddings
+- `POST /ai/vector-search` - Search similar vectors
+- `POST /ai/store-vector` - Store vector data
+- `GET /ai/similar-loans/:loanId` - Find similar loans
+- `POST /ai/risk-assessment` - Assess customer risk
+- `POST /ai/loan-recommendation` - Get loan recommendations
 
-## License
+## 🐳 Docker Deployment
 
-Nest is [MIT licensed](LICENSE).
+```bash
+# Build image
+docker build -t loan-backend .
+
+# Run container
+docker run -p 3000:3000 --env-file .env loan-backend
+```
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+## 📊 Database Schema
+
+The application includes 12 entities following the PostgreSQL schema:
+- `clients` - Customer information
+- `loan_applications` - Loan applications
+- `client_debt` - Customer debt information
+- `mock_loan_data` - Mock loan data
+- `loan_chunk` - Vector embeddings
+- `clients_to_loan_recommendations` - Loan recommendations
+- And 6 additional entities for complete loan management
+
+## 🔒 Security
+
+- Input validation using class-validator
+- Environment-based configuration
+- Secure database connections
+- API key management for AI services
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 👨‍💻 Author
+
+**Billy Okoth**
+- GitHub: [@BillyOkoth](https://github.com/BillyOkoth)
+- Website: [www.masaicode.com](https://www.masaicode.com)
