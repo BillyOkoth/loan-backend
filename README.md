@@ -201,6 +201,8 @@ For production deployments:
    - Application: http://localhost:3000
    - pgAdmin: http://localhost:8080
    - PostgreSQL: localhost:5432
+   - **Prometheus**: http://localhost:9090
+   - **Grafana**: http://localhost:3001 (admin/admin123)
 
 ### Manual Docker Deployment
 
@@ -237,6 +239,41 @@ docker run -p 3000:3000 \
   -e AI_API_KEY=$(cat /path/to/api_key) \
   loan-backend
 ```
+
+## 📊 Monitoring & Observability
+
+### Prometheus & Grafana Setup
+
+The application includes comprehensive monitoring with Prometheus and Grafana:
+
+#### **Metrics Endpoint**
+- **Prometheus Metrics**: `http://localhost:3000/metrics`
+- **Available Metrics**:
+  - HTTP request rate and duration
+  - Error rates by status code
+  - Memory and CPU usage
+  - Active connections
+  - Loan application counts
+  - Customer registration counts
+
+#### **Monitoring Dashboards**
+- **Grafana**: http://localhost:3001
+  - Default credentials: `admin/admin123`
+  - Pre-configured dashboard: "Loan Backend Monitoring"
+  - Real-time metrics visualization
+
+#### **Prometheus Configuration**
+- **Prometheus**: http://localhost:9090
+- Scrapes metrics every 15 seconds
+- Stores data for 200 hours
+- Monitors application, database, and system metrics
+
+#### **Custom Metrics**
+The application exposes custom business metrics:
+- `loan_applications_total` - Total loan applications by status
+- `customer_registrations_total` - Customer registration count
+- `http_requests_total` - HTTP request counts by method/route/status
+- `http_request_duration_seconds` - Response time histograms
 
 ## 🧪 Testing
 
