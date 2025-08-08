@@ -84,9 +84,9 @@ backend/
 # Run PostgreSQL with pgvector
 docker run -d \
   --name pgvector-dev \
-  -e POSTGRES_USER=admin \
-  -e POSTGRES_PASSWORD=EllaZanzi \
-  -e POSTGRES_DB=loanapp \
+  -e POSTGRES_USER=USER \
+  -e POSTGRES_PASSWORD=SECRET \
+  -e POSTGRES_DB=DB \
   -p 5432:5432 \
   ankane/pgvector
 ```
@@ -105,9 +105,9 @@ DATABASE_TYPE=postgres  # or oracle
 # PostgreSQL Configuration
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_DB=loanapp
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=EllaZanzi
+POSTGRES_DB=db
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_password
 
 # Oracle Configuration
 ORACLE_HOST=localhost
