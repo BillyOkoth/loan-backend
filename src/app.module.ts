@@ -10,8 +10,7 @@ import { OracleService } from './config/oracle.service';
 import { PostgresService } from './config/postgres.service';
 
 // Customer Module
-import { CustomerController } from './customer/customer.controller';
-import { CustomerService } from './customer/customer.service';
+import { CustomerModule } from './customer/customer.module';
 
 // Loan Module
 import { LoanController } from './loan/loan.controller';
@@ -25,6 +24,9 @@ import { AiService } from './ai/ai.service';
 import { MetricsModule } from './metrics/metrics.module';
 import { MetricsMiddleware } from './metrics/metrics.middleware';
 
+// Credit Assessment Module
+import { CreditAssessmentModule } from './credit-assessment/credit-assessment.module';
+
 // Import the TypeORM config from ormconfig
 import { getTypeOrmConfig } from '../ormconfig';
 
@@ -36,10 +38,11 @@ import { getTypeOrmConfig } from '../ormconfig';
     }),
     TypeOrmModule.forRoot(getTypeOrmConfig()),
     MetricsModule,
+    CreditAssessmentModule,
+    CustomerModule,
   ],
   controllers: [
     AppController,
-    CustomerController,
     LoanController,
     AiController,
   ],
@@ -48,7 +51,6 @@ import { getTypeOrmConfig } from '../ormconfig';
     DatabaseStrategyFactory,
     OracleService,
     PostgresService,
-    CustomerService,
     LoanService,
     AiService,
   ],
