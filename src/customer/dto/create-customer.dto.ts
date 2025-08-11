@@ -1,24 +1,40 @@
-import { IsString, IsEmail, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, Max, IsIn } from 'class-validator';
 
 export class CreateCustomerDto {
   @IsString()
-  firstName: string;
+  customer_id: string;
 
   @IsString()
-  lastName: string;
-
-  @IsEmail()
-  email: string;
+  first_name: string;
 
   @IsString()
-  phone: string;
+  last_name: string;
 
   @IsString()
-  address: string;
-
   @IsOptional()
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @IsNumber()
+  @IsOptional()
+  zip_code?: number;
+
+  @IsNumber()
+  @Min(18)
+  @Max(120)
+  @IsOptional()
+  age?: number;
+
   @IsNumber()
   @Min(0)
-  @Max(850)
-  creditScore?: number;
+  @IsOptional()
+  income?: number;
+
+  @IsString()
+  @IsIn(['yes', 'no'])
+  @IsOptional()
+  veteran?: string;
 }

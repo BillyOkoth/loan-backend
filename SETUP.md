@@ -174,3 +174,5 @@ docker run -p 3000:3000 --env-file .env loan-backend
 5. Implement logging and monitoring
 6. Add unit and integration tests
 7. Set up CI/CD pipeline
+
+

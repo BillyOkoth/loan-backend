@@ -14,6 +14,12 @@ import { FundingProviderTerms } from './src/entities/funding-provider-terms.enti
 import { LenderTerms } from './src/entities/lender-terms.entity';
 import { AffordableHousingZone } from './src/entities/affordable-housing-zone.entity';
 import { Floodzone } from './src/entities/floodzone.entity';
+import { FinancialDocuments } from './src/entities/financial-documents.entity';
+import { TransactionHistory } from './src/entities/transaction-history.entity';
+import { KenyanCreditFactors } from './src/entities/kenyan-credit-factors.entity';
+import { CreditAssessments } from './src/entities/credit-assessments.entity';
+import { CustomerReferences } from './src/entities/customer-references.entity';
+import { DocumentProcessingQueue } from './src/entities/document-processing-queue.entity';
 const configService = new ConfigService();
 
 export const createDataSource = (): DataSource => {
@@ -27,7 +33,7 @@ export const createDataSource = (): DataSource => {
       password: configService.get<string>('ORACLE_PASSWORD'),
       sid: configService.get<string>('ORACLE_SID', 'XEPDB1'),
       serviceName: configService.get<string>('ORACLE_SERVICE_NAME'),
-      synchronize: configService.get<boolean>('SYNCHRONIZE', false),
+      synchronize: configService.get<boolean>('SYNCHRONIZE', true),
       logging: configService.get<boolean>('LOGGING', true),
       entities: [
         Client,
@@ -42,8 +48,14 @@ export const createDataSource = (): DataSource => {
         LenderTerms,
         AffordableHousingZone,
         Floodzone,
+        FinancialDocuments,
+        TransactionHistory,
+        KenyanCreditFactors,
+        CreditAssessments,
+        CustomerReferences,
+        DocumentProcessingQueue,
       ],
-      migrations: ['src/migrations/*.ts'],
+      migrations: ['dist/migrations/*.js'],
       subscribers: ['src/subscribers/*.ts'],
     });
   } else {
@@ -55,7 +67,7 @@ export const createDataSource = (): DataSource => {
       username: configService.get<string>('POSTGRES_USER'),
       password: configService.get<string>('POSTGRES_PASSWORD'),
       database: configService.get<string>('POSTGRES_DB', 'loan_backend'),
-      synchronize: configService.get<boolean>('SYNCHRONIZE', false),
+      synchronize: configService.get<boolean>('SYNCHRONIZE', true),
       logging: configService.get<boolean>('LOGGING', true),
       entities: [
         Client,
@@ -70,8 +82,14 @@ export const createDataSource = (): DataSource => {
         LenderTerms,
         AffordableHousingZone,
         Floodzone,
+        FinancialDocuments,
+        TransactionHistory,
+        KenyanCreditFactors,
+        CreditAssessments,
+        CustomerReferences,
+        DocumentProcessingQueue,
       ],
-      migrations: ['src/migrations/*.ts'],
+      migrations: ['dist/migrations/*.js'],
       subscribers: ['src/subscribers/*.ts'],
       extra: {
         // Enable pgvector extension
