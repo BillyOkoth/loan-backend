@@ -26,6 +26,7 @@ import { MetricsMiddleware } from './metrics/metrics.middleware';
 
 // Credit Assessment Module
 import { CreditAssessmentModule } from './credit-assessment/credit-assessment.module';
+import { DocumentProcessingModule } from './document-processing/document-processing.module';
 
 // Import the TypeORM config from ormconfig
 import { getTypeOrmConfig } from '../ormconfig';
@@ -40,6 +41,7 @@ import { getTypeOrmConfig } from '../ormconfig';
     MetricsModule,
     CreditAssessmentModule,
     CustomerModule,
+    DocumentProcessingModule,
   ],
   controllers: [
     AppController,
