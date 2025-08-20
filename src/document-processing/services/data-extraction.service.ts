@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DocumentType } from '../../entities/financial-documents.entity';
 import * as sharp from 'sharp';
 import { createWorker } from 'tesseract.js';
-import { Vision } from '@google-cloud/vision';
+import { ImageAnnotatorClient } from '@google-cloud/vision';
+import * as fs from 'fs';
 import * as moment from 'moment-timezone';
 
 export interface ExtractedData {
@@ -18,6 +19,7 @@ export interface ExtractedData {
     };
     format?: string;
     language?: string;
+    error?: string;
   };
   structuredData?: {
     tables?: any[];
@@ -46,15 +48,15 @@ export interface ExtractionOptions {
 @Injectable()
 export class DataExtractionService {
   private readonly logger = new Logger(DataExtractionService.name);
-  private readonly ocrWorker: Promise<Tesseract.Worker>;
-  private readonly visionClient: Vision;
+  private readonly ocrWorker: Promise<any>;
+  private readonly visionClient: ImageAnnotatorClient;
 
   constructor() {
     // Initialize OCR worker
     this.ocrWorker = createWorker('eng+swa'); // English + Swahili
 
     // Initialize Google Cloud Vision client
-    this.visionClient = new Vision({
+    this.visionClient = new ImageAnnotatorClient({
       keyFilename: process.env.GOOGLE_CLOUD_CREDENTIALS
     });
   }
@@ -199,17 +201,17 @@ export class DataExtractionService {
     filePath: string,
     options: ExtractionOptions
   ): Promise<ExtractedData> {
-    const requests = [{
+    const request = {
       image: { source: { filename: filePath } },
       features: [
         { type: 'DOCUMENT_TEXT_DETECTION' },
         ...(options.detectTables ? [{ type: 'DOCUMENT_TEXT_DETECTION' }] : []),
         ...(options.extractEntities ? [{ type: 'ENTITY_DETECTION' }] : [])
       ]
-    }];
+    };
 
-    const [result] = await this.visionClient.batchAnnotateImages({ requests });
-    const response = result.responses[0];
+    const [result] = await this.visionClient.documentTextDetection(filePath);
+    const response = result;
 
     const extractedData: ExtractedData = {
       text: response.fullTextAnnotation?.text || '',
@@ -226,12 +228,12 @@ export class DataExtractionService {
       };
     }
 
-    if (options.extractEntities && response.entityAnnotations) {
-      extractedData.entities = response.entityAnnotations.map(entity => ({
-        type: entity.type,
+    if (options.extractEntities && response.textAnnotations) {
+      extractedData.entities = response.textAnnotations.map(entity => ({
+        type: 'TEXT',
         text: entity.description,
-        confidence: entity.score,
-        metadata: entity.metadata
+        confidence: entity.confidence,
+        metadata: {}
       }));
     }
 

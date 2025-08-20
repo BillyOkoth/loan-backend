@@ -52,6 +52,8 @@ lerna-debug.log*
 secrets/
 secrets.json
 config/secrets.json
+docker-compose.secrets.yml
+.env.backup
 
 # Temporary files
 *.tmp

@@ -138,6 +138,12 @@ export class KenyanCreditFactors {
 
   // Calculated Scores
   @Column({ type: 'integer', nullable: true })
+  mpesa_score: number; // 1-100 summary score for M-Pesa consistency
+
+  @Column({ type: 'integer', nullable: true })
+  sacco_score: number; // 1-100 summary score for SACCO participation
+
+  @Column({ type: 'integer', nullable: true })
   overall_credit_score: number; // 300-850
 
   @Column({

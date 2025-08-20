@@ -330,7 +330,7 @@ CREATE TABLE document_processing_queue (
 - NotificationService: Sends assessment results
 ```
 
-### **2. Document Processing Pipeline**
+### **2. Document Processing Pipeline** --testing
 ```typescript
 // Processing Flow
 1. File Upload → Validation → Storage

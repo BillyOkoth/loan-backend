@@ -14,24 +14,26 @@ export interface ParsedTransaction {
 export interface DocumentParserResult {
   success: boolean;
   transactions?: ParsedTransaction[];
-  metadata?: {
-    accountNumber?: string;
-    accountName?: string;
-    bankName?: string;
-    statementPeriod?: {
-      start: Date;
-      end: Date;
+      metadata?: {
+      accountNumber?: string;
+      accountName?: string;
+      bankName?: string;
+      statementPeriod?: {
+        start: Date;
+        end: Date;
+      };
+      openingBalance?: number;
+      closingBalance?: number;
+      totalCredits?: number;
+      totalDebits?: number;
+      currency?: string;
+      documentType?: DocumentType;
+      extractedText?: string;
+      confidence?: number;
+      processingTime?: number;
+      bankFormat?: string;
+      columnMapping?: any;
     };
-    openingBalance?: number;
-    closingBalance?: number;
-    totalCredits?: number;
-    totalDebits?: number;
-    currency?: string;
-    documentType?: DocumentType;
-    extractedText?: string;
-    confidence?: number;
-    processingTime?: number;
-  };
   error?: {
     code: string;
     message: string;

@@ -31,7 +31,7 @@ export class TransactionCategorizationService {
   private readonly logger = new Logger(TransactionCategorizationService.name);
 
   // Kenyan-specific transaction categories and patterns
-  private readonly categoryRules: CategoryRule[] = [
+  private categoryRules: CategoryRule[] = [
     {
       name: 'INCOME',
       patterns: [

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DocumentType } from '../../entities/financial-documents.entity';
 import { DocumentParser, DocumentParserResult, DocumentParserOptions, ParsedTransaction } from '../interfaces/parser.interface';
-import { parse } from 'csv-parse';
+import { Parser } from 'csv-parse';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as moment from 'moment-timezone';
@@ -134,19 +134,29 @@ export class CsvParser implements DocumentParser {
 
   private async parseCSV(content: string): Promise<{ headers: string[]; records: any[] }> {
     return new Promise((resolve, reject) => {
-      parse(content, {
+      const parser: any = new Parser({
         columns: true,
         skip_empty_lines: true,
         trim: true,
-        skip_records_with_empty_values: true
-      }, (error, records) => {
-        if (error) {
-          reject(error);
-        } else {
-          const headers = records.length > 0 ? Object.keys(records[0]) : [];
-          resolve({ headers, records });
-        }
+        skip_lines_with_empty_values: true
       });
+
+      parser.on('readable', () => {
+        let record;
+        const records = [];
+        while ((record = parser.read()) !== null) {
+          records.push(record);
+        }
+        const headers = records.length > 0 ? Object.keys(records[0]) : [];
+        resolve({ headers, records });
+      });
+
+      parser.on('error', (error) => {
+        reject(error);
+      });
+
+      parser.write(content);
+      parser.end();
     });
   }
 

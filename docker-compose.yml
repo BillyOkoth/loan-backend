@@ -2,13 +2,12 @@ version: '3.8'
 
 services:
   # PostgreSQL with pgvector
-  postgres:
+  pgvector-dev:
     image: ankane/pgvector:latest
     container_name: pgvector-dev
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: admin
+      POSTGRES_DB: loanapp
       POSTGRES_HOST_AUTH_METHOD: md5
     ports:
       - "${POSTGRES_PORT}:5432"
@@ -33,9 +32,19 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - postgres
+      - pgvector-dev
     networks:
       - loan-network
+
+  # Ollama API Service
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - loan-network
+    restart: unless-stopped
 
   # NestJS Application
   loan-backend:
@@ -47,11 +56,11 @@ services:
       NODE_ENV: ${NODE_ENV}
       PORT: ${PORT}
       DATABASE_TYPE: ${DATABASE_TYPE}
-      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_HOST: pgvector-dev
       POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: loanapp
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
       SYNCHRONIZE: ${SYNCHRONIZE}
       LOGGING: ${LOGGING}
       AI_MODEL_ENDPOINT: ${AI_MODEL_ENDPOINT}
@@ -59,11 +68,16 @@ services:
       VECTOR_DIMENSION: ${VECTOR_DIMENSION}
       VECTOR_TABLE_PREFIX: ${VECTOR_TABLE_PREFIX}
       LOG_LEVEL: ${LOG_LEVEL}
+      OLLAMA_API_URL: "http://ollama:11434/api/chat"
+      OLLAMA_MODEL: "phi3:mini"
+
     ports:
       - "${PORT}:${PORT}"
     depends_on:
-      postgres:
+      pgvector-dev:
         condition: service_healthy
+      ollama:
+        condition: service_started
     networks:
       - loan-network
     volumes:

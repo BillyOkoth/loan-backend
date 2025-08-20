@@ -51,6 +51,9 @@ export class TransactionHistory {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Column({ type: 'jsonb', nullable: true })
+  metadata: Record<string, any>;
+
   @Column({ type: 'text' })
   category: string;
 

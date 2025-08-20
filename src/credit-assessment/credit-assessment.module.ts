@@ -19,12 +19,15 @@ import { CreditAssessmentService } from './services/credit-assessment.service';
 import { DocumentProcessingService } from './services/document-processing.service';
 import { FileUploadService } from './services/file-upload.service';
 import { CreditScoringService } from './services/credit-scoring.service';
+import { AiService } from '../ai/ai.service';
+import { DocumentProcessingModule } from '../document-processing/document-processing.module';
 
 // Controllers
 import { CreditAssessmentController } from './controllers/credit-assessment.controller';
 
 @Module({
   imports: [
+    DocumentProcessingModule,
     TypeOrmModule.forFeature([
       FinancialDocuments,
       TransactionHistory,
@@ -71,6 +74,7 @@ import { CreditAssessmentController } from './controllers/credit-assessment.cont
     DocumentProcessingService,
     FileUploadService,
     CreditScoringService,
+    AiService,
   ],
   exports: [
     CreditAssessmentService,

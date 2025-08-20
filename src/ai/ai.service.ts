@@ -1,13 +1,28 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DatabaseStrategyFactory } from '../config/database.strategy';
 import { ConfigService } from '@nestjs/config';
+
+interface DocumentProcessingOptions {
+  documentType: string;
+  customerId: string;
+  documentId: number;
+  chunkIndex?: number;      // Add these optional
+  totalChunks?: number;     // properties
+}
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
+  private requestQueue: Promise<any> = Promise.resolve();
+  private readonly RETRY_ATTEMPTS = 3;
+  private readonly BASE_DELAY = 1000; // 1 second
+  private readonly DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+  private readonly DEEPSEEK_MODEL = 'deepseek-chat'; // Use current recommended model
+  private readonly OLLAMA_API_URL = 'http://localhost:11434/api/chat'; // Default Ollama URL
+  private readonly OLLAMA_MODEL = 'phi3:mini'; // Lightweight model for financial data
 
   constructor(
-    private readonly databaseStrategyFactory: DatabaseStrategyFactory,
+    @Optional() private readonly databaseStrategyFactory: DatabaseStrategyFactory,
     private readonly configService: ConfigService,
   ) {}
 
@@ -34,12 +49,339 @@ export class AiService {
         message: 'Failed to analyze loan application',
       };
     }
+    }
+    async processDocumentText(text: string, options: DocumentProcessingOptions): Promise<any> {
+      return new Promise((resolve, reject) => {
+        this.requestQueue = this.requestQueue.then(async () => {
+          for (let attempt = 0; attempt < this.RETRY_ATTEMPTS; attempt++) {
+            try {
+              const apiKey = this.configService.get<string>('AI_API_KEY');
+              if (!apiKey) {
+                throw new Error('AI_API_KEY not configured');
+              }
+         
+  
+              const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${apiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: 'o4-mini',
+                  messages: [
+                    { role: 'system', content: 'Extract structured data from financial documents. Return transactions and metadata in JSON format.' },
+                    { role: 'user', content: `Document type: ${options.documentType}\n\nContent:\n${text}` }
+                  ],
+                  temperature: 0.3,
+                  max_tokens: 2000 
+                })
+              });
+              this.logger.log('OpenAI API response:', response.status);
+              if (response.status === 429) {
+                this.logger.warn(`Rate limit hit, attempt ${attempt + 1}/${this.RETRY_ATTEMPTS}`);
+                await this.exponentialBackoff(attempt);
+                continue;
+              }
+  
+              if (!response.ok) {
+                throw new Error(`OpenAI API error: ${response.statusText}`);
+              }
+  
+              const data = await response.json();
+              this.logger.log('OpenAI  response data:', data);
+              resolve({
+                success: true,
+                content: data.choices[0]?.message?.content,
+                usage: data.usage
+              });
+              return;
+  
+            } catch (error) {
+              if (attempt === this.RETRY_ATTEMPTS - 1) {
+                this.logger.error(`Failed after ${this.RETRY_ATTEMPTS} attempts:`, error);
+                reject(error);
+              } else {
+                this.logger.warn(`Attempt ${attempt + 1} failed, retrying...`);
+                await this.exponentialBackoff(attempt);
+              }
+            }
+          }
+        });
+      });
+    } 
+
+    async processWithDeepSeek(text: string, options: DocumentProcessingOptions): Promise<any> {
+      return new Promise((resolve, reject) => {
+        this.requestQueue = this.requestQueue.then(async () => {
+          for (let attempt = 0; attempt < this.RETRY_ATTEMPTS; attempt++) {
+            try {
+              // const apiKey = this.configService.get<string>('DEEPSEEK_API_KEY');
+              const apiKey = 'sk-f46871766960414c822b30955015912b';
+              if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
+    
+              const response = await fetch(this.DEEPSEEK_API_URL, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${apiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: this.DEEPSEEK_MODEL,
+                  messages: [
+                    { 
+                      role: 'system', 
+                      content: `Extract financial data as JSON with this structure:
+    {
+      "account_number": string,
+      "account_name": string,
+      "statement_period": { "start": "DD/MM/YYYY", "end": "DD/MM/YYYY" },
+      "transactions": [{
+        "date": "DD/MM/YYYY",
+        "description": string,
+        "amount": number,
+        "balance": number,
+        "type": "debit" | "credit"
+      }],
+      "summary": {
+        "opening_balance": number,
+        "closing_balance": number,
+        "total_credits": number,
+        "total_debits": number
+      }
+    }
+    Convert amounts to numbers without commas. Identify transaction types.` 
+                    },
+                    { 
+                      role: 'user', 
+                      content: `DOCUMENT TYPE: ${options.documentType}\n\n${text}`
+                    }
+                  ],
+                  temperature: 0.1, // Lower for financial data
+                  response_format: { type: "json_object" }, // Critical for JSON output
+                  max_tokens: 4000
+                })
+              });
+    
+              if (response.status === 429) {
+                await this.exponentialBackoff(attempt);
+                continue;
+              }
+    
+              if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`DeepSeek API error ${response.status}: ${errorBody}`);
+              }
+    
+              const data = await response.json();
+              const content = data.choices[0]?.message?.content;
+              
+              // Validate JSON structure
+              const parsed = JSON.parse(content);
+              if (!parsed.transactions || !Array.isArray(parsed.transactions)) {
+                throw new Error('Invalid JSON structure from DeepSeek');
+              }
+    
+              resolve({
+                success: true,
+                content: parsed,
+                usage: data.usage
+              });
+              return;
+    
+            } catch (error) {
+              if (attempt === this.RETRY_ATTEMPTS - 1) {
+                this.logger.error(`DeepSeek processing failed after ${this.RETRY_ATTEMPTS} attempts`, error);
+                reject(error);
+              } else {
+                await this.exponentialBackoff(attempt);
+              }
+            }
+          }
+        });
+      });
+    }
+
+    async processWithOllama(text: string, options: DocumentProcessingOptions): Promise<any> {
+      return new Promise((resolve, reject) => {
+        this.requestQueue = this.requestQueue.then(async () => {
+          for (let attempt = 0; attempt < this.RETRY_ATTEMPTS; attempt++) {
+            try {
+              const response = await fetch(this.OLLAMA_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  model: this.OLLAMA_MODEL,
+                  stream: false, // Disable streaming for JSON response
+                  format: 'json', // Force JSON output
+                  messages: [
+                    { 
+                      role: 'system', 
+                      content: `Extract financial data as JSON. Follow this exact structure:
+{
+  "account_number": string,
+  "account_name": string,
+  "statement_period": { "start": "DD/MM/YYYY", "end": "DD/MM/YYYY" },
+  "transactions": [{
+    "date": "DD/MM/YYYY",
+    "description": string,
+    "amount": number,
+    "balance": number,
+    "type": "debit" | "credit"
+  }],
+  "summary": {
+    "opening_balance": number,
+    "closing_balance": number,
+    "total_credits": number,
+    "total_debits": number
   }
+}
+Rules:
+1. Convert amounts to numbers (remove commas and currency symbols)
+2. Negative amounts = debit, positive = credit
+3. Use exact date format DD/MM/YYYY
+4. Calculate summary metrics from transactions` 
+                    },
+                    { 
+                      role: 'user', 
+                      content: `BANK STATEMENT EXTRACTION\nDocument Type: ${options.documentType}\n\n${text}`
+                    }
+                  ],
+                  options: {
+                    temperature: 0.1, // Low for accuracy
+                    num_ctx: 4096 // Context window size
+                  }
+                })
+              });
+              this.logger.log('Ollama API response:', response.status);
+
+              if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`Ollama API error ${response.status}: ${errorBody}`);
+              }
+
+              const data = await response.json();
+              const content = data.message?.content;
+              
+              if (!content) throw new Error('Empty response from Ollama');
+              
+              // Parse and validate JSON
+              let parsed;
+              try {
+                parsed = JSON.parse(content);
+              } catch (e) {
+                throw new Error('Invalid JSON from Ollama: ' + e.message);
+              }
+
+              // Validate response structure
+              if (!parsed.transactions || !Array.isArray(parsed.transactions)) {
+                throw new Error('Missing transactions array in response');
+              }
+
+              resolve({
+                success: true,
+                content: parsed,
+                usage: { 
+                  input_tokens: data.prompt_eval_count,
+                  output_tokens: data.eval_count 
+                }
+              });
+              return;
+
+            } catch (error) {
+              if (attempt === this.RETRY_ATTEMPTS - 1) {
+                this.logger.error(`Ollama processing failed after ${this.RETRY_ATTEMPTS} attempts`, error);
+                reject(error);
+              } else {
+                await this.exponentialBackoff(attempt);
+              }
+            }
+          }
+        });
+      });
+    }
+
+    
+    
+
+    
+  // async processDocumentText(text: string, options: { documentType: string; customerId: string; documentId: number }): Promise<any> {
+  //   const apiKey = this.configService.get<string>('AI_API_KEY');
+
+  //   try {
+  //     this.logger.debug(`Using API key: ${apiKey?.substring(0, 10)}...`);
+
+  //     if (!apiKey) {
+  //       this.logger.warn('AI_API_KEY not set; returning empty result');
+  //       return { success: false, error: 'AI service not configured' };
+  //     }
+  //   } catch (error) {
+  //     this.logger.error('Failed to read AI_API_KEY:', error);
+  //     return { success: false, error: 'Failed to read AI configuration' };
+  //   }
+    
+
+  //   try {
+  //       const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  //         method: 'POST',
+  //         headers: {
+  //           'Authorization': `Bearer ${apiKey}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify({
+  //           model: 'gpt-4o',
+  //           messages: [
+  //             {
+  //               role: 'system',
+  //               content: 'Extract structured data from financial documents. Return transactions and metadata in JSON format.'
+  //             },
+  //             {
+  //               role: 'user',
+  //               content: `Document type: ${options.documentType}\n\nContent:\n${text}`
+  //             }
+  //           ],
+  //           temperature: 0.3,
+  //           max_tokens: 4000 
+  //         })
+  //       });
+
+  //     if (!response.ok) {
+  //       throw new Error(`OpenAI API error: ${response.statusText}`);
+  //     }
+  //     this.logger.log('OpenAI API response:', response);
+  //     const data = await response.json();
+  //     const content = data.choices[0]?.message?.content;
+      
+  //     try {
+  //       const parsed = JSON.parse(content);
+  //       return {
+  //         success: true,
+  //         transactions: parsed.transactions || [],
+  //         metadata: parsed.metadata || {},
+  //       };
+  //     } catch (e) {
+  //       return {
+  //         success: false,
+  //         error: 'Failed to parse AI response'
+  //       };
+  //     }
+  //   } catch (error) {
+  //     this.logger.error('AI processing failed:', error);
+  //     return {
+  //       success: false,
+  //       error: error.message
+  //     };
+  //   }
+  // }
 
   async generateEmbedding(content: string, databaseType: 'oracle' | 'postgres' = 'postgres'): Promise<any> {
     try {
       this.logger.log(`Generating embedding for content: ${content.substring(0, 100)}...`);
       
+      if (!this.databaseStrategyFactory) {
+        const embedding = await this.generatePostgresEmbedding(content);
+        return { success: true, embedding, databaseType: 'postgres', message: 'Embedding generated (fallback)' };
+      }
       const strategy = this.databaseStrategyFactory.getStrategy(databaseType);
       
       if (databaseType === 'oracle') {
@@ -69,6 +411,14 @@ export class AiService {
         message: 'Failed to generate embedding',
       };
     }
+  }
+
+  private async exponentialBackoff(attempt: number): Promise<void> {
+    const delayTime = Math.min(
+      this.BASE_DELAY * Math.pow(2, attempt),
+      10000 // Max 10 seconds
+    );
+    await new Promise(resolve => setTimeout(resolve, delayTime));
   }
 
   private async generateOracleEmbedding(content: string): Promise<number[]> {
@@ -150,7 +500,9 @@ export class AiService {
   async vectorSearch(embedding: number[], tableName: string, limit: number = 10, databaseType: 'oracle' | 'postgres' = 'postgres'): Promise<any> {
     try {
       this.logger.log(`Performing vector search on table: ${tableName} with limit: ${limit}`);
-      
+      if (!this.databaseStrategyFactory) {
+        throw new Error('DatabaseStrategyFactory not available in current module');
+      }
       const strategy = this.databaseStrategyFactory.getStrategy(databaseType);
       
       if (strategy.vectorSearch) {
@@ -178,6 +530,9 @@ export class AiService {
     try {
       this.logger.log(`Storing vector in table: ${tableName} using ${databaseType}`);
       
+      if (!this.databaseStrategyFactory) {
+        throw new Error('DatabaseStrategyFactory not available in current module');
+      }
       const strategy = this.databaseStrategyFactory.getStrategy(databaseType);
       
       if (strategy.insertVector) {
