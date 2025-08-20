@@ -1,0 +1,76 @@
+
+{
+  "family": "loan-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::995553365702:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "loan-backend",
+      "image": "995553365702.dkr.ecr.us-east-1.amazonaws.com/loan-backend:latest",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "3000"
+        },
+        {
+          "name": "DATABASE_TYPE",
+          "value": "postgres"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "POSTGRES_HOST",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:host::"
+        },
+        {
+          "name": "POSTGRES_USER",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:username::"
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:password::"
+        },
+        {
+          "name": "POSTGRES_DB",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:database::"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/app:JWT_SECRET::"
+        },
+        {
+          "name": "AI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/app:AI_API_KEY::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/loan-backend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
