@@ -85,9 +85,9 @@ backend/
 # Run PostgreSQL with pgvector
 docker run -d \
   --name pgvector-dev \
-  -e POSTGRES_USER=admin \
-  -e POSTGRES_PASSWORD=EllaZanzi \
-  -e POSTGRES_DB=loanapp \
+  -e POSTGRES_USER=USER \
+  -e POSTGRES_PASSWORD=SECRET \
+  -e POSTGRES_DB=DB \
   -p 5432:5432 \
   ankane/pgvector
 ```
@@ -121,9 +121,18 @@ DATABASE_TYPE=postgres
 # PostgreSQL + pgvector Configuration
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
-POSTGRES_DB=loanapp
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=your_secure_password_here
+
+POSTGRES_DB=db
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_password
+
+# Oracle Configuration
+ORACLE_HOST=localhost
+ORACLE_PORT=1521
+ORACLE_USER=your_user
+ORACLE_PASSWORD=your_password
+ORACLE_SID=XEPDB1
+
 
 # AI Configuration
 AI_MODEL_ENDPOINT=https://api.openai.com/v1/embeddings
