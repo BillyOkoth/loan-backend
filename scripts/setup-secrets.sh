@@ -48,7 +48,7 @@ if [ ! -z "$API_KEY" ]; then
 fi
 
 # Database Password
-read -p "Enter Database Password (press enter to skip): " DB_PASS
+read -p "Enter Database Password (press enter to skip): " PASS
 if [ ! -z "$DB_PASS" ]; then
     store_secret "postgres_password" "$DB_PASS"
     update_env "POSTGRES_PASSWORD" "$DB_PASS"

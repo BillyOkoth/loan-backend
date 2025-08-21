@@ -1,5 +1,6 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
+import { config } from 'dotenv';
 
 // Entity imports
 import { Client } from './src/entities/client.entity';
@@ -20,86 +21,90 @@ import { KenyanCreditFactors } from './src/entities/kenyan-credit-factors.entity
 import { CreditAssessments } from './src/entities/credit-assessments.entity';
 import { CustomerReferences } from './src/entities/customer-references.entity';
 import { DocumentProcessingQueue } from './src/entities/document-processing-queue.entity';
+
+// Load .env file
+config();
+
+// Initialize ConfigService with process.env
 const configService = new ConfigService();
 
-export const createDataSource = (): DataSource => {
-  const databaseType = configService.get<string>('DATABASE_TYPE','postgres');
+const entities = [
+  Client,
+  LoanApplication,
+  ClientDebt,
+  MockLoanData,
+  LoanChunk,
+  ClientsToLoanRecommendations,
+  ClientsToLoan,
+  LoanProvider,
+  FundingProviderTerms,
+  LenderTerms,
+  AffordableHousingZone,
+  Floodzone,
+  FinancialDocuments,
+  TransactionHistory,
+  KenyanCreditFactors,
+  CreditAssessments,
+  CustomerReferences,
+  DocumentProcessingQueue,
+];
+
+const getDataSourceOptions = (): DataSourceOptions => {
+  // Log database connection details (except sensitive info)
+  console.log('Database Configuration:', {
+    type: configService.get('DATABASE_TYPE'),
+    host: configService.get('POSTGRES_HOST'),
+    port: configService.get('POSTGRES_PORT'),
+    database: configService.get('POSTGRES_DB'),
+    hasUser: !!configService.get('POSTGRES_USER'),
+    hasPassword: !!configService.get('POSTGRES_PASSWORD'),
+  });
+
+  const databaseType = configService.get<string>('DATABASE_TYPE', 'postgres');
+  
   if (databaseType === 'oracle') {
-    return new DataSource({
+    return {
       type: 'oracle',
-      host: configService.get<string>('ORACLE_HOST', 'localhost'),
-      port: configService.get<number>('ORACLE_PORT', 1521),
+      host: configService.get<string>('ORACLE_HOST'),
+      port: configService.get<number>('ORACLE_PORT'),
       username: configService.get<string>('ORACLE_USER'),
       password: configService.get<string>('ORACLE_PASSWORD'),
-      sid: configService.get<string>('ORACLE_SID', 'XEPDB1'),
+      sid: configService.get<string>('ORACLE_SID'),
       serviceName: configService.get<string>('ORACLE_SERVICE_NAME'),
-      synchronize: configService.get<boolean>('SYNCHRONIZE', true),
-      logging: configService.get<boolean>('LOGGING', true),
-      entities: [
-        Client,
-        LoanApplication,
-        ClientDebt,
-        MockLoanData,
-        LoanChunk,
-        ClientsToLoanRecommendations,
-        ClientsToLoan,
-        LoanProvider,
-        FundingProviderTerms,
-        LenderTerms,
-        AffordableHousingZone,
-        Floodzone,
-        FinancialDocuments,
-        TransactionHistory,
-        KenyanCreditFactors,
-        CreditAssessments,
-        CustomerReferences,
-        DocumentProcessingQueue,
-      ],
+      synchronize: configService.get<boolean>('SYNCHRONIZE', false),
+      logging: configService.get<boolean>('LOGGING', false),
+      entities,
       migrations: ['dist/migrations/*.js'],
       subscribers: ['src/subscribers/*.ts'],
-    });
-  } else {
-    // PostgreSQL configuration
-    return new DataSource({
-      type: 'postgres',
-      host: configService.get<string>('POSTGRES_HOST', 'localhost'),
-      port: configService.get<number>('POSTGRES_PORT', 5432),
-      username: configService.get<string>('POSTGRES_USER'),
-      password: configService.get<string>('POSTGRES_PASSWORD'),
-      database: configService.get<string>('POSTGRES_DB', 'loan_backend'),
-      synchronize: configService.get<boolean>('SYNCHRONIZE', true),
-      logging: configService.get<boolean>('LOGGING', true),
-      entities: [
-        Client,
-        LoanApplication,
-        ClientDebt,
-        MockLoanData,
-        LoanChunk,
-        ClientsToLoanRecommendations,
-        ClientsToLoan,
-        LoanProvider,
-        FundingProviderTerms,
-        LenderTerms,
-        AffordableHousingZone,
-        Floodzone,
-        FinancialDocuments,
-        TransactionHistory,
-        KenyanCreditFactors,
-        CreditAssessments,
-        CustomerReferences,
-        DocumentProcessingQueue,
-      ],
-      migrations: ['dist/migrations/*.js'],
-      subscribers: ['src/subscribers/*.ts'],
-      extra: {
-        // Enable pgvector extension
-        extensions: ['vector'],
-      },
-    });
+    };
   }
+
+  // PostgreSQL configuration
+  return {
+    type: 'postgres',
+    host: configService.get<string>('POSTGRES_HOST'),
+    port: configService.get<number>('POSTGRES_PORT'),
+    username: configService.get<string>('POSTGRES_USER'),
+    password: configService.get<string>('POSTGRES_PASSWORD'),
+    database: configService.get<string>('POSTGRES_DB'),
+    synchronize: configService.get<boolean>('SYNCHRONIZE', false),
+    logging: configService.get<boolean>('LOGGING', false),
+    entities,
+    migrations: ['dist/migrations/*.js'],
+    subscribers: ['src/subscribers/*.ts'],
+    extra: {
+      // Enable pgvector extension
+      extensions: ['vector'],
+    },
+  };
+};
+
+export const createDataSource = (): DataSource => {
+  return new DataSource(getDataSourceOptions());
 };
 
 // Export the options for NestJS TypeORM module
-export const getTypeOrmConfig = () => createDataSource().options;
+export const getTypeOrmConfig = () => getDataSourceOptions();
 
+// Export default DataSource for CLI commands
 export default createDataSource();
