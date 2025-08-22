@@ -28,8 +28,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY package*.json ./
 
-# Copy RDS CA certificate
-COPY rds-ca-rsa2048-g1.pem ./
+# Download RDS CA certificate
+RUN curl -o rds-ca-rsa2048-g1.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem || echo "Failed to download RDS CA certificate, continuing without it"
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
