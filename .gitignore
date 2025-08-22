@@ -54,6 +54,7 @@ secrets.json
 config/secrets.json
 docker-compose.secrets.yml
 .env.backup
+.env.bak
 
 # Shell scripts
 *.sh
