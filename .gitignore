@@ -55,6 +55,20 @@ config/secrets.json
 docker-compose.secrets.yml
 .env.backup
 
+# Shell scripts
+*.sh
+
+# SQL files
+*.sql
+
+# Markdown files (except README)
+*.md
+!README.md
+
+# Specific assessment files
+THRESHOLD_REQUIREMENTS_ASSESSMENT.md
+CREDIT_SCORE_ASSESSMENT_PLAN.md
+
 # Temporary files
 *.tmp
 *.temp
