@@ -1,0 +1,47 @@
+{
+  "family": "loan-backend-db-init",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::995553365702:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "loan-backend-db-init",
+      "image": "postgres:15",
+      "entryPoint": ["sh", "-c"],
+      "command": ["echo \"$SQL_SCRIPT\" > /tmp/schema.sql && PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -f /tmp/schema.sql"],
+      "environment": [],
+      "secrets": [
+        {
+          "name": "POSTGRES_HOST",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:host::"
+        },
+        {
+          "name": "POSTGRES_USER",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:username::"
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:password::"
+        },
+        {
+          "name": "POSTGRES_DB",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:database::"
+        },
+        {
+          "name": "SQL_SCRIPT",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:schema::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/loan-backend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

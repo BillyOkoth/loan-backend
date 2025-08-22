@@ -27,7 +27,9 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: |
+        npm ci
+        npm cache clean --force
 
     - name: Run tests
       run: npm test
@@ -36,7 +38,7 @@ jobs:
       run: npm run lint
 
     - name: Type checking
-      run: npm run build
+      run: npx tsc --noEmit
 
   deploy:
     needs: test
