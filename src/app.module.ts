@@ -1,5 +1,5 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,14 +30,49 @@ import { DocumentProcessingModule } from './document-processing/document-process
 
 // Import the TypeORM config from ormconfig
 import { getTypeOrmConfig } from '../ormconfig';
+import databaseConfig from './config/database.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      load: [databaseConfig],
     }),
-    TypeOrmModule.forRoot(getTypeOrmConfig()),
+    // TypeOrmModule.forRoot(getTypeOrmConfig()),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        const dbConfig = configService.get('database');
+        console.log('Database Config:', {
+          type: dbConfig.type,
+          host: dbConfig.postgres.host,
+          database: dbConfig.postgres.database,
+          hasPassword: !!dbConfig.postgres.password,
+          ssl: !!dbConfig.postgres.ssl,
+          sslConfig: dbConfig.postgres.ssl,
+          nodeEnv: process.env.NODE_ENV
+        });
+        
+        return {
+          type: dbConfig.type,
+          host: dbConfig.postgres.host,
+          port: dbConfig.postgres.port,
+          username: dbConfig.postgres.username,
+          password: dbConfig.postgres.password,
+          database: dbConfig.postgres.database,
+          synchronize: dbConfig.synchronize,
+          logging: dbConfig.logging,
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          migrations: [__dirname + '/migrations/*{.ts,.js}'],
+          ssl: dbConfig.postgres.ssl,
+          extra: {
+            ssl: dbConfig.postgres.ssl
+          }
+        };
+      },
+      inject: [ConfigService],
+    }),
     MetricsModule,
     CreditAssessmentModule,
     CustomerModule,

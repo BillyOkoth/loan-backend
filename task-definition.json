@@ -10,6 +10,8 @@
     {
       "name": "loan-backend",
       "image": "995553365702.dkr.ecr.us-east-1.amazonaws.com/loan-backend:latest",
+      "entryPoint": ["node"],
+      "command": ["dist/src/main"],
       "portMappings": [
         {
           "containerPort": 3000,
@@ -28,6 +30,26 @@
         {
           "name": "DATABASE_TYPE",
           "value": "postgres"
+        },
+        {
+          "name": "POSTGRES_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "SSL_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "SYNCHRONIZE",
+          "value": "false"
+        },
+        {
+          "name": "LOGGING",
+          "value": "true"
         }
       ],
       "secrets": [
@@ -35,6 +57,7 @@
           "name": "POSTGRES_HOST",
           "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:host::"
         },
+
         {
           "name": "POSTGRES_USER",
           "valueFrom": "arn:aws:secretsmanager:us-east-1:995553365702:secret:loan-backend/database:username::"
@@ -65,7 +88,10 @@
         }
       },
       "healthCheck": {
-        "command": ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"],
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:3000/api/credit-assessment/health -H 'Accept: application/json' || exit 1"
+        ],
         "interval": 30,
         "timeout": 5,
         "retries": 3,

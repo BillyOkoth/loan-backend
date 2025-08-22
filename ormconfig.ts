@@ -51,7 +51,17 @@ const entities = [
 
 const getDataSourceOptions = (): DataSourceOptions => {
   // Log database connection details (except sensitive info)
-  console.log('Database Configuration:', {
+  console.log('Environment Variables:', {
+    NODE_ENV: process.env.NODE_ENV,
+    DATABASE_TYPE: process.env.DATABASE_TYPE,
+    POSTGRES_HOST: process.env.POSTGRES_HOST,
+    POSTGRES_PORT: process.env.POSTGRES_PORT,
+    POSTGRES_DB: process.env.POSTGRES_DB,
+    hasUser: !!process.env.POSTGRES_USER,
+    hasPassword: !!process.env.POSTGRES_PASSWORD,
+  });
+
+  console.log('ConfigService Values:', {
     type: configService.get('DATABASE_TYPE'),
     host: configService.get('POSTGRES_HOST'),
     port: configService.get('POSTGRES_PORT'),
@@ -92,9 +102,13 @@ const getDataSourceOptions = (): DataSourceOptions => {
     entities,
     migrations: ['dist/migrations/*.js'],
     subscribers: ['src/subscribers/*.ts'],
+    ssl: process.env.NODE_ENV === 'production' ? {
+      rejectUnauthorized: false,
+      ca: require('fs').readFileSync('./rds-ca-rsa2048-g1.pem').toString()
+    } : false,
     extra: {
       // Enable pgvector extension
-      extensions: ['vector'],
+      extensions: ['vector']
     },
   };
 };
