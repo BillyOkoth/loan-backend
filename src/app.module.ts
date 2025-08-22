@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { DatabaseStrategyFactory } from './config/database.strategy';
 import { OracleService } from './config/oracle.service';
 import { PostgresService } from './config/postgres.service';
+import { databaseConfig } from './config/database.config';
 
 // Customer Module
 import { CustomerModule } from './customer/customer.module';
@@ -28,18 +29,14 @@ import { MetricsMiddleware } from './metrics/metrics.middleware';
 import { CreditAssessmentModule } from './credit-assessment/credit-assessment.module';
 import { DocumentProcessingModule } from './document-processing/document-processing.module';
 
-// Import the TypeORM config from ormconfig
-import { getTypeOrmConfig } from '../ormconfig';
-import databaseConfig from './config/database.config';
-
+// Import the TypeORM config from database config
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
-      load: [databaseConfig],
+      load: [ databaseConfig],
     }),
-    // TypeOrmModule.forRoot(getTypeOrmConfig()),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
